@@ -1,0 +1,29 @@
+object DebugForm: TDebugForm
+  Left = 314
+  Height = 281
+  Top = 873
+  Width = 539
+  Anchors = []
+  BorderIcons = [biSystemMenu, biMaximize]
+  Caption = 'DEBUG Output'
+  ClientHeight = 281
+  ClientWidth = 539
+  Color = clBlack
+  Font.Color = clWindowText
+  Font.Height = -14
+  Font.Name = 'MS Sans Serif'
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
+  OnResize = FormResize
+  OnShow = FormShow
+  Position = poDefault
+  LCLVersion = '2.3.0.0'
+  object Image1: TImage
+    Left = 0
+    Height = 281
+    Top = 0
+    Width = 539
+    Align = alClient
+  end
+end
