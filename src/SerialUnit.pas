@@ -230,7 +230,7 @@ begin
     Result := True;
   except
     // error, result is false, allow abort
-    on EAbort do AbortMode := True;
+    AbortMode := True;
   end;
 end;
 
@@ -310,7 +310,7 @@ begin
   Serial.Config(baud, 8, 'N', 1, False, False);
   if Serial.LastError <> 0 then
   begin
-    CommError('#' + IntToStr(Serial.LastError));
+    CommError(Serial.LastErrorDesc);
     Exit;
   end;
   SerialThreadStart;
@@ -419,10 +419,7 @@ end;
 procedure CommError(ErrorMsg: string);
 begin
   CloseComm;
-  if AbortMode then
-  begin
-    if not BatchMode then DebugLn(ErrorMsg+' (%s)', [CommString]);
-  end;
+  DebugLn(ErrorMsg+' (%s)', [CommString]);
   Abort;
 end;
 

@@ -81,11 +81,11 @@ const
   cOrange4              = $1F0F00;
   cOrange5              = $0F0700;
   cWhite                = $FFFFFF;
-  cGrey1                = $BFBFBF;
-  cGrey2                = $7F7F7F;
-  cGrey3                = $3F3F3F;
-  cGrey4                = $1F1F1F;
-  cGrey5                = $0F0F0F;
+  cGray1                = $BFBFBF;
+  cGray2                = $7F7F7F;
+  cGray3                = $3F3F3F;
+  cGray4                = $1F1F1F;
+  cGray5                = $0F0F0F;
   cBlack                = $000000;
 
   TopColor              = 20;
@@ -222,6 +222,7 @@ type
 
     MouseMoveTimer      : TTimer;
     BreakpointTimer     : TTimer;
+    ButtonTimer         : TTimer;
 
 private
 
@@ -412,6 +413,10 @@ private
   DisScrollTimer        : integer;
   OldTickCount          : integer;
 
+  GoLeft                : integer;
+  GoCaption             : string;
+  GoState               : integer;
+
   Hint                  : string;
 
   KeyShift              : TShiftState;
@@ -436,6 +441,7 @@ published
   {$ENDIF}
   procedure FormPaint(Sender: TObject);
   procedure FormBreakpointTimeout(Sender: TObject);
+  procedure FormButtonTimeout(Sender: TObject);
   procedure FormDestroy(Sender: TObject);
 
   procedure Breakpoint;
@@ -450,6 +456,7 @@ published
   procedure DrawRegBin(left, top, value, color: integer);
   procedure DrawPtrBytes(left, top, address: integer; buff:PByteArray);
   procedure DrawInt(left, top, int: integer);
+  procedure DrawGoButton(ButtonColor, CaptionColor: integer);
   procedure BlendPixel(var p:PByte; a, b: integer; alpha, shade: byte);
   procedure BitmapToCanvas(Level: integer);
 
@@ -519,6 +526,10 @@ begin
   BreakpointTimer := TTimer.Create(Self);
   BreakpointTimer.OnTimer := FormBreakpointTimeout;
   BreakpointTimer.Enabled := False;
+  // Set up button timer
+  ButtonTimer := TTimer.Create(Self);
+  ButtonTimer.OnTimer := FormButtonTimeout;
+  ButtonTimer.Enabled := False;
 end;
 
 destructor TDebuggerForm.Destroy;
@@ -568,6 +579,9 @@ begin
   Hint := '';
   DisScrollTimer := 0;
   OldTickCount := 0;
+  GoLeft := bGOl;
+  GoCaption := '';
+  GoState := 0;
   // Set up cog/lut/hub bitmaps
   RegMap := TBitmap.Create;
   RegMap.PixelFormat := pf24bit;
@@ -724,6 +738,11 @@ begin
   // In Go button?
   if InButtonGo then
   begin
+    // Start Go button timer and set state
+    ButtonTimer.Enabled := False;
+    ButtonTimer.Interval := 100;
+    ButtonTimer.Enabled := True;
+    GoState := 2;
     // Break?
     if BreakpointTimer.Enabled = False then
     begin
@@ -1121,11 +1140,24 @@ begin
     end;
   end;
   // Draw 'Break' on Go button
-  DrawBox(bGOl, bGOt, bGOw, bGOh, cCmdButton, 6, False);
-  DrawText(bGOl + 2 + q2, bGOt, cCmdText, [fsBold], 'Break');
+  GoLeft := bGOl + 2 + q2;
+  GoCaption := 'Break';
+  DrawGoButton(cCmdButton, cCmdText);
   // Draw hint if no other cog has been in debug for 100ms
   if GetTickCount64 - LastDebugTick > 100 then
     DrawText(HINTl, HINTt, cIndicator, [fsItalic], 'To force an asynchronous break in this cog, another cog must be idling in its own debugger');
+  // Update window
+  BitMapToCanvas(0);
+end;
+
+procedure TDebuggerForm.FormButtonTimeout(Sender: TObject);
+begin
+  // Disable timer
+  ButtonTimer.Enabled := False;
+  // Reset Go button state
+  GoState := 0;
+  // Redraw Go button without highlight
+  DrawGoButton(cCmdButton, cCmdText);
   // Update window
   BitMapToCanvas(0);
 end;
@@ -1764,9 +1796,17 @@ begin
     DrawBox(bBREAKl, bBREAKt, bBREAKw, bBREAKh, cModeButton, 3, True);
     DrawText(bBREAKl, bBREAKt, cModeText, [fsBold], 'BREAK');
   end;
-  // Draw 'Stop' or 'Go' on Go button
-  if RepeatMode then s := 'Stop' else s := ' Go';
-  DrawText(bGOl + 3, bGOt, cCmdText, [fsBold], s);
+  // Draw 'Stop' or 'Go' on Go button and handle inverse state
+  GoLeft := bGOl + 3;
+  if RepeatMode then GoCaption := 'Stop' else GoCaption := ' Go';
+  if GoState > 0 then
+  begin
+    DrawGoButton(cCmdText, cCmdButton);
+    Dec(GoState);
+  end
+  else
+    DrawGoButton(cCmdButton, cCmdText);
+    ButtonTimer.Enabled := False;
 
   //  ---------------------------------
   //   Update any state-dependent hint
@@ -2261,6 +2301,12 @@ begin
     if i = 3 then s := 'busy' else if i = 2 then s := 'wait' else s := 'idle';
     DrawText(left + 9, top, cData2, [fsBold], s);
   end;
+end;
+
+procedure TDebuggerForm.DrawGoButton(ButtonColor, CaptionColor: integer);
+begin
+  DrawBox(bGOl, bGOt, bGOw, bGOh, ButtonColor, 6, False);
+  DrawText(GoLeft, bGOt, CaptionColor, [fsBold], GoCaption);
 end;
 
 procedure TDebuggerForm.BlendPixel(var p:PByte; a, b: integer; alpha, shade: byte);
