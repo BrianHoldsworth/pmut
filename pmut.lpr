@@ -25,6 +25,7 @@ var
 
 // Forward declare
 procedure WriteHelp(err: string=''); forward;
+procedure WriteSetCmdHelp; forward;
 procedure CompileProgram; forward;
 procedure CompileDebug; forward;
 procedure Compile; forward;
@@ -40,12 +41,17 @@ procedure LoadObj(Filename: string); forward;
 procedure Run;
 var
   ParseErr, ShortOpts: string;
-  LongOpts, Nonopts, Commands: TStringArray;
+  LongOpts, ShortProj, LongProj, Defaults: TStringArray;
+  Nonopts, Commands, split: TStringArray;
   i: integer;
+  SettingsUpdated: boolean;
 begin
   ShortOpts:='hdl';
   LongOpts:=['help','doc','list'];
-  Commands:=['set','build','load','flash','debug'];
+  ShortProj:=['device','top','libs'];
+  LongProj:=['comm.device','source.top','source.libs'];
+  Defaults:=['/dev/ttyUSB0','main.spin2','~/propeller2_lib'];
+  Commands:=['set','build','load','flash','debug','watch'];
 
   // Read .ini file settings
   Settings := TIniFile.Create('.pmut_project');
@@ -59,7 +65,7 @@ begin
   end;
 
   Nonopts := Application.GetNonOptions(ShortOpts, LongOpts);
-  if Length(NonOpts) > 2 then
+  if Length(NonOpts) > 3 then
   begin
     WriteHelp('Too many arguments');
     Exit;
@@ -84,7 +90,28 @@ begin
   // Handle the 'set' command
   if i = 0 then
   begin
-    WriteHelp('TODO set command');
+    SettingsUpdated := False;
+    if Length(Nonopts) <> 3 then
+      WriteSetCmdHelp
+    else if Length(Nonopts) = 3 then
+    begin
+      for i := 0 to Length(LongProj)-1 do
+        if (LongProj[i]=Nonopts[1]) or (ShortProj[i]=Nonopts[1]) then
+        begin
+          split := LongProj[i].Split('.');
+          Settings.WriteString(split[0],split[1],Nonopts[2]);
+          SettingsUpdated := True;
+          Break;
+        end;
+      if SettingsUpdated then Settings.UpdateFile else WriteSetCmdHelp;
+    end;
+    Writeln('Current project settings:');
+    for i := 0 to Length(LongProj)-1 do
+    begin
+      split := LongProj[i].Split('.');
+      Writeln(Format('%s = %s', [LongProj[i],
+                         Settings.ReadString(split[0],split[1],Defaults[i])]));
+    end;
     Exit;
   end;
 
@@ -92,7 +119,7 @@ begin
   if Length(Nonopts) = 2 then
     TopFilename := Nonopts[1]
   else
-    TopFilename := Settings.ReadString('Source', 'Top', '');
+    TopFilename := Settings.ReadString('Source', 'Top', 'main.spin2');
   if Topfilename='' then
   begin
     WriteHelp('No topfile for source code specified');
@@ -108,6 +135,9 @@ begin
       Exit;
     end;
   end;
+  // And set library path
+  LibraryDir := Settings.ReadString('Source', 'Libs', Defaults[2]);
+  LibraryDir := ExpandFileName(IncludeTrailingPathDelimiter(LibraryDir));
 
   // init p2com interface
   P2 := P2InitStruct;
@@ -115,14 +145,33 @@ begin
   P2.ListLimit := ListLimit;
   P2.Doc := @DocBuffer;
   P2.DocLimit := DocLimit;
-  P2.DebugMode := i=4;    //debug?
+  P2.DebugMode := i>3;    //debug?
 
+  if i=1 then
+  begin
+    CompileProgram;       //build
+    Exit;
+  end;
   Compile;
-  if i=1 then Exit;       //build?
-  // load/debug?
-  if i<>3 then ComposeRAM(False, True)
-  // flash?
-  else ComposeRAM(True, True);
+  ComposeRAM(i=3, True);  //flash or load RAM?
+end;
+
+procedure WriteHelp(err: string='');
+begin
+  if Length(err) > 0 then WriteLn(err);
+  Writeln('Usage: pmut [-d,--doc] [-l,--list] [-h,--help] command [topfile]');
+  Writeln('where command is one of "build","load","flash", "debug", "watch" or "set"');
+  Writeln('Use "pmut set" to modify/list the project settings (in ".pmut_project").');
+  Writeln('Name of source code "topfile" is taken from project setting (source.top),');
+  Writeln('if not included in the command line.');
+end;
+
+procedure WriteSetCmdHelp;
+begin
+  Writeln('Set project options with "pmut set <setting> <value>"');
+  Writeln('Settings are as listed below and can be abbreviated to');
+  Writeln('just "device", "top", or "libs"');
+  Writeln;
 end;
 
 procedure SetFilename(const NewFilename: string);
@@ -151,14 +200,18 @@ begin
   else
     TopDir := IncludeTrailingPathDelimiter(ExtractFileDir(TopFilename));
   CurrentDir := IncludeTrailingPathDelimiter(GetCurrentDir());
-  LibraryDir := IncludeTrailingPathDelimiter(ExtractFileDir(Application.ExeName));
+end;
+
+function DependencyExists(filename: string): boolean;
+begin
+  Result := FileExists(filename);
 end;
 
 procedure CompileProgram;
 begin
   P2.DebugMode := False;
   Compile; // aborts if error
-  ComposeRAM(False, True);
+  ComposeRAM(False, False);
 end;
 
 procedure CompileDebug;
@@ -249,12 +302,12 @@ begin
       Move(ObjParamTypes[i*ParamLimit], P2.ParamTypes, ParamLimit);
       Move(ObjParamValues[i*ParamLimit], P2.ParamValues, ParamLimit*4);
       // compile sub-object
-      if (Level = 1) and FileExists(TopDir + ObjFilenames[i] + '.spin2') then CompileRecursively(TopDir + ObjFilenames[i] + '.spin2', 1)
-      else if not ((Level = 1) and FileExists(TopDir + ObjFilenames[i] + '.obj')) then
-        if (Level <> 3) and FileExists(CurrentDir + ObjFilenames[i] + '.spin2') then CompileRecursively(CurrentDir + ObjFilenames[i] + '.spin2', 2)
-        else if not ((Level <> 3) and FileExists(CurrentDir + ObjFilenames[i] + '.obj')) then
-          if FileExists(LibraryDir + ObjFilenames[i] + '.spin2') then CompileRecursively(LibraryDir + ObjFilenames[i] + '.spin2', 3)
-          else if not FileExists(LibraryDir + ObjFilenames[i] + '.obj') then
+      if (Level = 1) and DependencyExists(TopDir + ObjFilenames[i] + '.spin2') then CompileRecursively(TopDir + ObjFilenames[i] + '.spin2', 1)
+      else if not ((Level = 1) and DependencyExists(TopDir + ObjFilenames[i] + '.obj')) then
+        if (Level <> 3) and DependencyExists(CurrentDir + ObjFilenames[i] + '.spin2') then CompileRecursively(CurrentDir + ObjFilenames[i] + '.spin2', 2)
+        else if not ((Level <> 3) and DependencyExists(CurrentDir + ObjFilenames[i] + '.obj')) then
+          if DependencyExists(LibraryDir + ObjFilenames[i] + '.spin2') then CompileRecursively(LibraryDir + ObjFilenames[i] + '.spin2', 3)
+          else if not DependencyExists(LibraryDir + ObjFilenames[i] + '.obj') then
           // error, neither .spin2 nor .obj file found
           begin
             LoadCompilerFile(Filename);
@@ -279,8 +332,8 @@ begin
     for i := 0 to ObjFiles-1 do
     begin
       ObjFilename := ObjFilenames[i] + '.obj';
-      if (Level = 1) and FileExists(TopDir + ObjFilename) then ObjFilename := TopDir + ObjFilename
-      else if (Level <> 3) and FileExists(CurrentDir + ObjFilename) then ObjFilename := CurrentDir + ObjFilename
+      if (Level = 1) and DependencyExists(TopDir + ObjFilename) then ObjFilename := TopDir + ObjFilename
+      else if (Level <> 3) and DependencyExists(CurrentDir + ObjFilename) then ObjFilename := CurrentDir + ObjFilename
       else ObjFilename := LibraryDir + ObjFilename;
       AssignFile(f, ObjFilename);
       try
@@ -305,8 +358,8 @@ begin
     for i := 0 to DatFiles-1 do
     begin
       DatFilename := PChar(@P2.DatFilenames[i shl 8]);
-      if (Level = 1) and FileExists(TopDir + DatFilename) then DatFilename := TopDir + DatFilename
-      else if (Level <> 3) and FileExists(CurrentDir + DatFilename) then DatFilename := CurrentDir + DatFilename
+      if (Level = 1) and DependencyExists(TopDir + DatFilename) then DatFilename := TopDir + DatFilename
+      else if (Level <> 3) and DependencyExists(CurrentDir + DatFilename) then DatFilename := CurrentDir + DatFilename
       else DatFilename := LibraryDir + DatFilename;
       AssignFile(f, DatFilename);
       DebugLn('Load DAT file ' + DatFilename);
@@ -454,10 +507,13 @@ begin
   if DownloadToRAM then
   begin
     DebugLn('Load binary...');
-    comport := Settings.ReadString('Comm', 'Port', '');
+    comport := Settings.ReadString('Comm', 'Device', '');
     if comport <> '' then
        LoadHardware(comport)
-    else DebugLn('Comm device not set. Try using "pmut set port"');
+    else begin
+      DebugLn('Comm device not set. Use "pmut set comm.device=<device>"');
+      P2.DebugMode := False;
+    end;
   end;
 end;
 
@@ -475,16 +531,6 @@ begin
   finally
     CloseFile(f);
   end;
-end;
-
-procedure WriteHelp(err: string='');
-begin
-  if Length(err) > 0 then WriteLn(err);
-  Writeln('Usage: pmut [-d,--doc] [-l,--list] [-h,--help] command [topfile]');
-  Writeln('where command is one of "build","load","flash", "debug", or "set"');
-  Writeln('Use "pmut set" to modify/list the project settings (in ".pmut_project").');
-  Writeln('Name of source code "topfile" is taken from project settings,');
-  Writeln('if not included in the command line.');
 end;
 
 begin

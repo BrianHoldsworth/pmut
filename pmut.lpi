@@ -87,6 +87,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
+      <Libraries Value="/usr/lib32/"/>
       <OtherUnitFiles Value="src"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
@@ -106,9 +107,7 @@
         <DebugInfoType Value="dsDwarf3"/>
       </Debugging>
       <Options>
-        <Win32>
-          <GraphicApplication Value="True"/>
-        </Win32>
+        <LinkerOptions Value="--static"/>
       </Options>
     </Linking>
   </CompilerOptions>
