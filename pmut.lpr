@@ -12,7 +12,13 @@ uses
   cthreads,
   {$ENDIF}
   Classes, SysUtils, Interfaces, LazLogger, IniFiles, GlobalUnit, SerialUnit,
-  CustApp, Forms, DebugUnit;
+  CustApp, Forms, DependencyHandler, DebugUnit;
+
+type
+  TProgCallback = class
+    public
+      procedure CompileDebug;
+  end;
 
 var
   Settings: TIniFile;
@@ -23,11 +29,12 @@ var
   CurrentDir: string;
   LibraryDir: string;
 
+  Callbacks: TProgCallback;
+
 // Forward declare
 procedure WriteHelp(err: string=''); forward;
 procedure WriteSetCmdHelp; forward;
 procedure CompileProgram; forward;
-procedure CompileDebug; forward;
 procedure Compile; forward;
 procedure CompileRecursively(Filename: string; Level: integer); forward;
 procedure ComposeRAM(ProgramFlash, DownloadToRAM: boolean); forward;
@@ -55,6 +62,11 @@ begin
 
   // Read .ini file settings
   Settings := TIniFile.Create('.pmut_project');
+
+  // For managing dependency files
+  Dependency := TDependencyHandler.Create;
+  Callbacks := TProgCallback.Create;
+  DebugWatchActive := False;
 
   // Basic command parsing
   ParseErr := Application.CheckOptions(ShortOpts, LongOpts);
@@ -126,10 +138,10 @@ begin
     Exit;
   end;
   // And verify Topfilename exists
-  if not FileExists(TopFilename) then
+  if not Dependency.Always(TopFilename) then
   begin
     if not TopFilename.EndsWith('.spin2') then TopFilename := TopFilename + '.spin2';
-    if not FileExists(TopFilename) then
+    if not Dependency.Always(TopFilename) then
     begin
       DebugLn('Top file not found: "%s"', [TopFilename]);
       Exit;
@@ -154,6 +166,7 @@ begin
   end;
   Compile;
   ComposeRAM(i=3, True);  //flash or load RAM?
+  if i = 5 then DebugWatchActive := True;
 end;
 
 procedure WriteHelp(err: string='');
@@ -202,11 +215,6 @@ begin
   CurrentDir := IncludeTrailingPathDelimiter(GetCurrentDir());
 end;
 
-function DependencyExists(filename: string): boolean;
-begin
-  Result := FileExists(filename);
-end;
-
 procedure CompileProgram;
 begin
   P2.DebugMode := False;
@@ -214,7 +222,7 @@ begin
   ComposeRAM(False, False);
 end;
 
-procedure CompileDebug;
+procedure TProgCallback.CompileDebug;
 begin
   P2.DebugMode := True;
   Compile; // aborts if error
@@ -302,12 +310,12 @@ begin
       Move(ObjParamTypes[i*ParamLimit], P2.ParamTypes, ParamLimit);
       Move(ObjParamValues[i*ParamLimit], P2.ParamValues, ParamLimit*4);
       // compile sub-object
-      if (Level = 1) and DependencyExists(TopDir + ObjFilenames[i] + '.spin2') then CompileRecursively(TopDir + ObjFilenames[i] + '.spin2', 1)
-      else if not ((Level = 1) and DependencyExists(TopDir + ObjFilenames[i] + '.obj')) then
-        if (Level <> 3) and DependencyExists(CurrentDir + ObjFilenames[i] + '.spin2') then CompileRecursively(CurrentDir + ObjFilenames[i] + '.spin2', 2)
-        else if not ((Level <> 3) and DependencyExists(CurrentDir + ObjFilenames[i] + '.obj')) then
-          if DependencyExists(LibraryDir + ObjFilenames[i] + '.spin2') then CompileRecursively(LibraryDir + ObjFilenames[i] + '.spin2', 3)
-          else if not DependencyExists(LibraryDir + ObjFilenames[i] + '.obj') then
+      if (Level = 1) and Dependency.Exists(TopDir + ObjFilenames[i] + '.spin2') then CompileRecursively(TopDir + ObjFilenames[i] + '.spin2', 1)
+      else if not ((Level = 1) and FileExists(TopDir + ObjFilenames[i] + '.obj')) then
+        if (Level <> 3) and Dependency.Exists(CurrentDir + ObjFilenames[i] + '.spin2') then CompileRecursively(CurrentDir + ObjFilenames[i] + '.spin2', 2)
+        else if not ((Level <> 3) and FileExists(CurrentDir + ObjFilenames[i] + '.obj')) then
+          if Dependency.Exists(LibraryDir + ObjFilenames[i] + '.spin2') then CompileRecursively(LibraryDir + ObjFilenames[i] + '.spin2', 3)
+          else if not FileExists(LibraryDir + ObjFilenames[i] + '.obj') then
           // error, neither .spin2 nor .obj file found
           begin
             LoadCompilerFile(Filename);
@@ -332,8 +340,8 @@ begin
     for i := 0 to ObjFiles-1 do
     begin
       ObjFilename := ObjFilenames[i] + '.obj';
-      if (Level = 1) and DependencyExists(TopDir + ObjFilename) then ObjFilename := TopDir + ObjFilename
-      else if (Level <> 3) and DependencyExists(CurrentDir + ObjFilename) then ObjFilename := CurrentDir + ObjFilename
+      if (Level = 1) and FileExists(TopDir + ObjFilename) then ObjFilename := TopDir + ObjFilename
+      else if (Level <> 3) and FileExists(CurrentDir + ObjFilename) then ObjFilename := CurrentDir + ObjFilename
       else ObjFilename := LibraryDir + ObjFilename;
       AssignFile(f, ObjFilename);
       try
@@ -358,8 +366,8 @@ begin
     for i := 0 to DatFiles-1 do
     begin
       DatFilename := PChar(@P2.DatFilenames[i shl 8]);
-      if (Level = 1) and DependencyExists(TopDir + DatFilename) then DatFilename := TopDir + DatFilename
-      else if (Level <> 3) and DependencyExists(CurrentDir + DatFilename) then DatFilename := CurrentDir + DatFilename
+      if (Level = 1) and Dependency.Always(TopDir + DatFilename) then DatFilename := TopDir + DatFilename
+      else if (Level <> 3) and Dependency.Always(CurrentDir + DatFilename) then DatFilename := CurrentDir + DatFilename
       else DatFilename := LibraryDir + DatFilename;
       AssignFile(f, DatFilename);
       DebugLn('Load DAT file ' + DatFilename);
@@ -537,6 +545,12 @@ begin
   Application.Scaled:=True;
   Application.Initialize;
   Run;
+  // Startup debugger
+{$ifndef LINUX}
+  if DebugWatchActive then DebugLn('Warning! "watch" command not implemented for platform.');
+{$else}
+  if DebugWatchActive then Dependency.Notify := Callbacks.CompileDebug;
+{$endif}
   if (P2<>nil) and P2.DebugMode and (P2.DebugWindowsOff = 0) then
   begin
     Application.CreateForm(TDebugForm, DebugForm);

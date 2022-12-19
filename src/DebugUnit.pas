@@ -105,7 +105,11 @@ end;
 
 procedure TDebugForm.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
-  if Key = VK_ESCAPE then Close;
+  if Key = VK_ESCAPE then
+  begin
+    DebugWatchActive := False;
+    Close;
+  end;
 end;
 
 procedure TDebugForm.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -118,6 +122,14 @@ end;
 procedure TDebugForm.FormShow(Sender: TObject);
 begin
   StartDebug;
+  while DebugWatchActive do
+    if Dependency.Modified then
+    begin
+      CloseDisplays;
+      CloseLogFile;
+      Dependency.Modified := False;
+      StartDebug;
+    end;
 end;
 ////////////////////////
 //  Display Routines  //

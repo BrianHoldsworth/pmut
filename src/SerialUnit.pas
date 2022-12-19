@@ -269,11 +269,14 @@ procedure OperateDebug;
 var
   i: integer;
   b: byte;
+  ticks, start: QWord;
 begin
   DebugActive := True;
   DebugForm.ResetDisplays;
+  start := GetTickCount64;
   while DebugActive do
   begin
+    if DebugWatchActive then ticks := GetTickCount64-start;
     for i := 1 to 100 do
     begin
       if SerialThreadError then CommError(SerialThreadString);
@@ -284,6 +287,11 @@ begin
         DebugForm.ChrIn(b);
       end
       else Break;
+    end;
+    if DebugWatchActive and (ticks>334) then
+    begin
+      Dependency.Watch;
+      if Dependency.Modified then DebugActive := False else start := GetTickCount64;
     end;
     Application.ProcessMessages;        // process messages when no byte ready or after 100 consecutive bytes
   end;

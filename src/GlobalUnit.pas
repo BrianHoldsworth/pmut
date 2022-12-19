@@ -7,7 +7,7 @@ unit GlobalUnit;
 interface
 
 uses
-  LCLIntf, LCLType, SysUtils, Classes, Graphics, CustApp;
+  LCLIntf, LCLType, SysUtils, Classes, Graphics, CustApp, DependencyHandler;
 
 const
   kBackSpace    = 8;
@@ -183,6 +183,9 @@ var
   DebuggerID         : integer;
   LastDebugTick      : integer;
   RequestCOGBRK      : integer;
+
+  Dependency         : TDependencyHandler;
+  DebugWatchActive   : boolean;
 
 implementation
 {$IFDEF UNIX}

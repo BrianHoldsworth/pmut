@@ -78,6 +78,11 @@
         <Filename Value="src/DirectBitmap.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="src/dependencyhandler.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DependencyHandler"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
