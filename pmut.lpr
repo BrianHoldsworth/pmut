@@ -12,7 +12,7 @@ uses
   cthreads,
   {$ENDIF}
   Classes, SysUtils, Interfaces, LazLogger, IniFiles, GlobalUnit, SerialUnit,
-  CustApp, Forms, DependencyHandler, DebugUnit;
+  CustApp, Forms, DependencyHandler, DebugUnit, InfoUnit;
 
 type
   TProgCallback = class
@@ -53,8 +53,8 @@ var
   i: integer;
   SettingsUpdated: boolean;
 begin
-  ShortOpts:='hdl';
-  LongOpts:=['help','doc','list'];
+  ShortOpts:='hdli';
+  LongOpts:=['help','doc','list','info'];
   ShortProj:=['device','top','libs'];
   LongProj:=['comm.device','source.top','source.libs'];
   Defaults:=['/dev/ttyUSB0','main.spin2','~/propeller2_lib'];
@@ -172,7 +172,7 @@ end;
 procedure WriteHelp(err: string='');
 begin
   if Length(err) > 0 then WriteLn(err);
-  Writeln('Usage: pmut [-d,--doc] [-l,--list] [-h,--help] command [topfile]');
+  Writeln('Usage: pmut [-d,--doc] [-l,--list] [-h,--help] [-i,--info] command [topfile]');
   Writeln('where command is one of "build","load","flash", "debug", "watch" or "set"');
   Writeln('Use "pmut set" to modify/list the project settings (in ".pmut_project").');
   Writeln('Name of source code "topfile" is taken from project setting (source.top),');
@@ -556,6 +556,12 @@ begin
     Application.CreateForm(TDebugForm, DebugForm);
     Application.Run;
     FreeAndNil(DebugForm);
+  end
+  else if (P2<>nil) and Application.HasOption('i','info') then
+  begin
+    Application.CreateForm(TInfoForm, InfoForm);
+    Application.Run;
+    FreeAndNil(InfoForm);
   end;
   CloseComm;
 end.

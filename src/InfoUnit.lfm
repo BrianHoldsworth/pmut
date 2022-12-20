@@ -1,0 +1,404 @@
+object InfoForm: TInfoForm
+  Left = 12
+  Height = 405
+  Top = 758
+  Width = 405
+  BorderStyle = bsSingle
+  Caption = 'Object Info'
+  ClientHeight = 405
+  ClientWidth = 405
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -14
+  Font.Name = 'MS Sans Serif'
+  OnActivate = FormActivate
+  OnKeyDown = FormKeyDown
+  Position = poMainFormCenter
+  LCLVersion = '2.3.0.0'
+  object Bevel2: TBevel
+    Left = 10
+    Height = 119
+    Top = 276
+    Width = 316
+    Style = bsRaised
+  end
+  object Bevel1: TBevel
+    Left = 10
+    Height = 257
+    Top = 10
+    Width = 385
+    Style = bsRaised
+  end
+  object Label4: TLabel
+    Left = 30
+    Height = 21
+    Top = 138
+    Width = 119
+    AutoSize = False
+    Caption = 'Object :'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label5: TLabel
+    Left = 30
+    Height = 21
+    Top = 167
+    Width = 119
+    AutoSize = False
+    Caption = 'Variable :'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label6: TLabel
+    Left = 30
+    Height = 21
+    Top = 197
+    Width = 119
+    AutoSize = False
+    Caption = 'Stack / Free :'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label7: TLabel
+    Left = 30
+    Height = 21
+    Top = 295
+    Width = 119
+    AutoSize = False
+    Caption = 'Clock Mode :'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label8: TLabel
+    Left = 30
+    Height = 21
+    Top = 325
+    Width = 119
+    AutoSize = False
+    Caption = 'Clock Freq :'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label1: TLabel
+    Left = 30
+    Height = 20
+    Top = 30
+    Width = 80
+    AutoSize = False
+    Caption = '$00000'
+    Font.Color = clBtnText
+    Font.Height = -15
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object HubTopLabel: TLabel
+    Left = 295
+    Height = 20
+    Top = 30
+    Width = 80
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = '$7FFFF'
+    Font.Color = clBtnText
+    Font.Height = -15
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label3: TLabel
+    Left = 30
+    Height = 30
+    Top = 20
+    Width = 345
+    Alignment = taCenter
+    AutoSize = False
+    Caption = 'Hub RAM Usage'
+    Font.Color = clBtnText
+    Font.Height = -20
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object FreqLabel: TLabel
+    Left = 148
+    Height = 21
+    Top = 325
+    Width = 158
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Hz'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object ClockLabel: TLabel
+    Left = 148
+    Height = 21
+    Top = 295
+    Width = 158
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Mode'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object StackLabel: TLabel
+    Left = 148
+    Height = 21
+    Top = 197
+    Width = 168
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'bytes'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object VariableLabel: TLabel
+    Left = 148
+    Height = 21
+    Top = 167
+    Width = 168
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'bytes'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object ProgramLabel: TLabel
+    Left = 148
+    Height = 21
+    Top = 138
+    Width = 168
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'bytes'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object MapImage: TImage
+    Left = 30
+    Height = 31
+    Top = 59
+    Width = 345
+  end
+  object Label9: TLabel
+    Left = 345
+    Height = 21
+    Top = 138
+    Width = 30
+    AutoSize = False
+    Color = clRed
+    ParentColor = False
+    Transparent = False
+  end
+  object Label10: TLabel
+    Left = 345
+    Height = 21
+    Top = 167
+    Width = 30
+    AutoSize = False
+    Color = clYellow
+    ParentColor = False
+    Transparent = False
+  end
+  object Label11: TLabel
+    Left = 345
+    Height = 21
+    Top = 197
+    Width = 30
+    AutoSize = False
+    Color = clAqua
+    ParentColor = False
+    Transparent = False
+  end
+  object Bevel3: TBevel
+    Left = 30
+    Height = 31
+    Top = 59
+    Width = 345
+  end
+  object Bevel4: TBevel
+    Left = 345
+    Height = 21
+    Top = 138
+    Width = 30
+  end
+  object Bevel5: TBevel
+    Left = 345
+    Height = 21
+    Top = 167
+    Width = 30
+  end
+  object Bevel6: TBevel
+    Left = 345
+    Height = 21
+    Top = 197
+    Width = 30
+  end
+  object InputFreqLabel: TLabel
+    Left = 148
+    Height = 21
+    Top = 354
+    Width = 158
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Hz'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label12: TLabel
+    Left = 30
+    Height = 21
+    Top = 354
+    Width = 119
+    AutoSize = False
+    Caption = 'XI Input Freq :'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label13: TLabel
+    Left = 30
+    Height = 21
+    Top = 108
+    Width = 119
+    AutoSize = False
+    Caption = 'Interpreter :'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object InterpreterLabel: TLabel
+    Left = 148
+    Height = 21
+    Top = 108
+    Width = 168
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'bytes'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Bevel7: TBevel
+    Left = 345
+    Height = 21
+    Top = 108
+    Width = 30
+  end
+  object Bevel8: TBevel
+    Left = 345
+    Height = 21
+    Top = 108
+    Width = 30
+  end
+  object Label2: TLabel
+    Left = 30
+    Height = 21
+    Top = 226
+    Width = 119
+    AutoSize = False
+    Caption = 'Debugger :'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object DebuggerLabel: TLabel
+    Left = 148
+    Height = 21
+    Top = 226
+    Width = 168
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'bytes'
+    Font.Color = clBtnText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object Label16: TLabel
+    Left = 345
+    Height = 21
+    Top = 226
+    Width = 30
+    AutoSize = False
+    Color = clBlack
+    ParentColor = False
+    Transparent = False
+  end
+  object Bevel9: TBevel
+    Left = 345
+    Height = 21
+    Top = 226
+    Width = 30
+  end
+  object OkButton: TButton
+    Left = 335
+    Height = 119
+    Top = 276
+    Width = 60
+    Cancel = True
+    Caption = 'OK'
+    Font.Color = clWindowText
+    Font.Height = -17
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ModalResult = 1
+    OnClick = OkButtonClick
+    ParentFont = False
+    TabOrder = 0
+    TabStop = False
+  end
+  object Label15: TLabel
+    Left = 345
+    Height = 21
+    Top = 108
+    Width = 30
+    AutoSize = False
+    Color = clWhite
+    ParentColor = False
+    Transparent = False
+  end
+end

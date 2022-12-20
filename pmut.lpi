@@ -83,6 +83,13 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="DependencyHandler"/>
       </Unit>
+      <Unit>
+        <Filename Value="src/InfoUnit.pas"/>
+        <IsPartOfProject Value="True"/>
+        <ComponentName Value="InfoForm"/>
+        <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
