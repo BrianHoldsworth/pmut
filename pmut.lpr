@@ -12,7 +12,7 @@ uses
   cthreads,
   {$ENDIF}
   Classes, SysUtils, Interfaces, LazLogger, IniFiles, GlobalUnit, SerialUnit,
-  CustApp, Forms, DependencyHandler, DebugUnit, InfoUnit;
+  CustApp, Forms, DebugUnit, InfoUnit, DependencyHandler;
 
 type
   TProgCallback = class
@@ -30,6 +30,7 @@ var
   LibraryDir: string;
 
   Callbacks: TProgCallback;
+  RebuildFail: boolean;
 
 // Forward declare
 procedure WriteHelp(err: string=''); forward;
@@ -38,7 +39,7 @@ procedure CompileProgram; forward;
 procedure Compile; forward;
 procedure CompileRecursively(Filename: string; Level: integer); forward;
 procedure ComposeRAM(ProgramFlash, DownloadToRAM: boolean); forward;
-procedure CompilerError(ErrorMsg: string); forward;
+procedure CompilerError(ErrorMsg: string; Loc: integer = 0); forward;
 procedure LoadCompilerFile(Filename: string); forward;
 procedure LoadFile(const Filename: string); forward;
 procedure SaveTextFile(Filename: string; Start: PByteArray; Bytes: integer); forward;
@@ -225,8 +226,12 @@ end;
 procedure TProgCallback.CompileDebug;
 begin
   P2.DebugMode := True;
-  Compile; // aborts if error
-  ComposeRAM(False, True);
+  RebuildFail := False;
+  Compile;
+  if not RebuildFail then
+     ComposeRAM(False, True)
+  else
+      DebugLn('Error: Rebuild failed');
 end;
 
 procedure Compile;
@@ -242,7 +247,6 @@ begin
   for i := 1 to 255 do PWordArray(@P2.DebugData)[i] := 0;
   P2.ObjStackPtr := 0;
   CompileRecursively(TopFile, Level);           // aborts if error
-  DebugLn('Compilation Successful');
 end;
 
 procedure CompileRecursively(Filename: string; Level: integer);
@@ -277,7 +281,10 @@ begin
   // load source file and perform first pass of compilation
   LoadCompilerFile(Filename);
   P2Compile1;
-  if P2.Error then CompilerError(P2.ErrorMsg+' @'+IntToStr(P2.SourceStart)); //aborts if error
+  if P2.Error then begin
+    CompilerError(P2.ErrorMsg, P2.SourceStart);
+    Exit;
+  end;
   if P2.PasmMode and (P2.ObjStackPtr > 1) then CompilerError(Filename + ' is a PASM file and cannot be used as a Spin2 object'); // aborts if error
   ObjFiles := P2.ObjFiles;
   DatFiles := P2.DatFiles;
@@ -333,7 +340,10 @@ begin
   // reload source file and reperform first pass of compilation
   LoadCompilerFile(Filename);
   P2Compile1;
-  if P2.Error then CompilerError(P2.ErrorMsg+' @'+IntToStr(P2.SourceStart)); //aborts if error
+  if P2.Error then begin
+    CompilerError(P2.ErrorMsg, P2.SourceStart); //aborts if error
+    Exit;
+  end;
   // load sub-objects' .obj files
   p := 0;
   if ObjFiles > 0 then
@@ -391,7 +401,10 @@ begin
   ObjTitle := @(P2.ObjTitle);
   StrCopy(ObjTitle, PChar(ExtractFilename(Filename)));
   P2Compile2;
-  if P2.Error then CompilerError(P2.ErrorMsg); //aborts if error
+  if P2.Error then begin
+    CompilerError(P2.ErrorMsg, P2.SourceStart); //aborts if error
+    Exit
+  end;
   // save obj file
   SaveFile(ExtFilename(CurrentFilename, 'obj'), @(P2.Obj), P2.ObjLength);
   // save documentation and listing files
@@ -403,10 +416,25 @@ begin
   Dec(P2.ObjStackPtr);
 end;
 
-procedure CompilerError(ErrorMsg: string);
+procedure CompilerError(ErrorMsg: string; Loc: integer);
+var
+  LineNum, Col: integer;
 begin
-  DebugLn(ErrorMsg + '.');
-  Abort;
+  LineNum := 0;
+  Col := 0;
+  while Loc > 0 do
+  begin
+    Inc(LineNum);
+    Col := Loc + 1;
+    while (Loc>0) and (SourceBuffer[Loc]<>13) do
+      Dec(Loc);
+    Dec(Loc);
+  end;
+  if LineNum > 0 then
+     ErrorMsg := CurrentFilename+': '+ErrorMsg+
+     ' ['+IntToStr(LineNum)+','+IntToStr(Col)+']';
+  DebugLn(ErrorMsg);
+  if not DebugWatchActive then Abort else RebuildFail := True;
 end;
 
 procedure LoadCompilerFile(Filename: string);
@@ -489,6 +517,7 @@ begin
       + 'KB hub RAM by ' + IntToStr(s - HubLimit) + ' bytes');  //aborts if error
   // save .bin file
   SaveFile(ExtFilename(CurrentFilename, 'bin'), @(P2.Obj), P2.ObjLength);
+  DebugLn('Build successful');
   // insert debugger?
   if P2.DebugMode then
   begin

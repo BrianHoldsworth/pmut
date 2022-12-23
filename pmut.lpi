@@ -79,16 +79,15 @@
         <IsPartOfProject Value="True"/>
       </Unit>
       <Unit>
-        <Filename Value="src/dependencyhandler.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="DependencyHandler"/>
-      </Unit>
-      <Unit>
         <Filename Value="src/InfoUnit.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="InfoForm"/>
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
+      </Unit>
+      <Unit>
+        <Filename Value="src/DependencyHandler.pas"/>
+        <IsPartOfProject Value="True"/>
       </Unit>
     </Units>
   </ProjectOptions>
