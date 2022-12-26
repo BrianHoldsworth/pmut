@@ -49,7 +49,7 @@ To build `pmut` requires the [Free Pascal Compiler (fpc)](https://www.freepascal
 1. Install fpc and Lazarus. If you are installing for the first time, I _highly recommend_ using [fpcupdeluxe](https://github.com/LongDirtyAnimAlf/fpcupdeluxe/releases). Installing this binary and running it let's you easily manage the installation of both fpc and Lazarus, including cross-compilers you may need. It's a more stable/reliable way to manage these dev tools.
 2. You _will need to install_ the i386 cross-compiler too, since you are (almost certainly) building on a 64-bit OS.
 3. Also, `pmut` needs to link to Gtk2 libraries on your system, which must also include 32-bit versions. Hopefully, this is not an issue on your Linux distro, but could be on some bare-bones Linux OS instances.
-4. Install and build `p2com` is in a sibling directory (e.g. `~build/p2com/` and `~/build/pmut/`).
+4. Install and build `p2com` in a sibling directory (e.g. `~build/p2com/` and `~/build/pmut/`).
 5. Open Lazarus, then browse and open the `pmut/pmut.lpi` project file. Press Shift+F9 to build.
 
 A successful build will yield a `pmut` executable in the project directory. Copy the executable to some directory in your command line path, and you are good-to-go.
@@ -58,3 +58,13 @@ Related Projects
 ----------------
 
 [p2com](https://github.com/BrianHoldsworth/p2com) - Port of core P2 compiler to flat-assembler (fasm).
+
+TODO
+----
+
+ [] Linux binary distribution support (rpm, deb, user repositories, maybe flatpak?)
+ [] color terminal output, so info, warnings, and errors are easily differentiated
+ [] editor integration so compiler errors position the cursor automatically
+ [] 64-bit version (requires p2com ported to x64 assembly code)
+ [] macOS support (requires 64-bit support)
+ 
