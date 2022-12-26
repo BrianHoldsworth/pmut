@@ -62,9 +62,9 @@ Related Projects
 TODO
 ----
 
- [] Linux binary distribution support (rpm, deb, user repositories, maybe flatpak?)
- [] color terminal output, so info, warnings, and errors are easily differentiated
- [] editor integration so compiler errors position the cursor automatically
- [] 64-bit version (requires p2com ported to x64 assembly code)
- [] macOS support (requires 64-bit support)
+- [ ] Linux binary distribution support (rpm, deb, user repositories, maybe flatpak?)
+- [ ] color terminal output, so info, warnings, and errors are easily differentiated
+- [ ] editor integration so compiler errors position the cursor automatically
+- [ ] 64-bit version (requires p2com ported to x64 assembly code)
+- [ ] macOS support (requires 64-bit support)
  
