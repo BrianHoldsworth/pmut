@@ -54,17 +54,17 @@ To build `pmut` requires the [Free Pascal Compiler (fpc)](https://www.freepascal
 
 A successful build will yield a `pmut` executable in the project directory. Copy the executable to some directory in your command line path, and you are good-to-go.
 
-Related Projects
-----------------
-
-[p2com](https://github.com/BrianHoldsworth/p2com) - Port of core P2 compiler to flat-assembler (fasm).
-
 TODO
 ----
 
 - [ ] Linux binary distribution support (rpm, deb, user repositories, maybe flatpak?)
-- [ ] color terminal output, so info, warnings, and errors are easily differentiated
+- [x] color terminal output, so info, warnings, and errors are easily differentiated
 - [ ] editor integration so compiler errors position the cursor automatically
 - [ ] 64-bit version (requires p2com ported to x64 assembly code)
 - [ ] macOS support (requires 64-bit support)
+
+Related Projects
+----------------
+
+[p2com](https://github.com/BrianHoldsworth/p2com) - Port of core P2 compiler to flat-assembler (fasm).
  

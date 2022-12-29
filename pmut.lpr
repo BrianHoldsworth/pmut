@@ -12,7 +12,7 @@ uses
   cthreads,
   {$ENDIF}
   Classes, SysUtils, Interfaces, LazLogger, IniFiles, GlobalUnit, SerialUnit,
-  CustApp, Forms, DebugUnit, InfoUnit, DependencyHandler;
+  Crt, CustApp, Forms, DebugUnit, InfoUnit, DependencyHandler;
 
 type
   TProgCallback = class
@@ -46,6 +46,22 @@ procedure SaveTextFile(Filename: string; Start: PByteArray; Bytes: integer); for
 procedure SaveFile(Filename: string; Start: Pointer; Bytes: integer); forward;
 procedure LoadObj(Filename: string); forward;
 
+// Color Debug output
+procedure DebugLn(const s: string; c: Byte=LightGray); overload;
+begin
+  TextColor(c);
+  DebugLogger.DebugLn(s);
+  TextColor(LightGray);
+end;
+
+procedure DebugLn(const S: String; Args: array of const; c: Byte=LightGray); overload;
+begin
+  TextColor(c);
+  DebugLogger.DebugLn(S, Args);
+  TextColor(LightGray);
+end;
+
+// Main entry point
 procedure Run;
 var
   ParseErr, ShortOpts: string;
@@ -144,7 +160,7 @@ begin
     if not TopFilename.EndsWith('.spin2') then TopFilename := TopFilename + '.spin2';
     if not Dependency.Always(TopFilename) then
     begin
-      DebugLn('Top file not found: "%s"', [TopFilename]);
+      DebugLn('Top file not found: "%s"', [TopFilename], LightRed);
       Exit;
     end;
   end;
@@ -231,7 +247,7 @@ begin
   if not RebuildFail then
      ComposeRAM(False, True)
   else
-      DebugLn('Error: Rebuild failed');
+      DebugLn('Rebuild failed', LightRed);
 end;
 
 procedure Compile;
@@ -433,7 +449,7 @@ begin
   if LineNum > 0 then
      ErrorMsg := CurrentFilename+': '+ErrorMsg+
      ' ['+IntToStr(LineNum)+','+IntToStr(Col)+']';
-  DebugLn(ErrorMsg);
+  DebugLn(ErrorMsg, LightRed);
   if not DebugWatchActive then Abort else RebuildFail := True;
 end;
 
@@ -517,7 +533,7 @@ begin
       + 'KB hub RAM by ' + IntToStr(s - HubLimit) + ' bytes');  //aborts if error
   // save .bin file
   SaveFile(ExtFilename(CurrentFilename, 'bin'), @(P2.Obj), P2.ObjLength);
-  DebugLn('Build successful');
+  DebugLn('Build successful', Green);
   // insert debugger?
   if P2.DebugMode then
   begin
@@ -548,7 +564,7 @@ begin
     if comport <> '' then
        LoadHardware(comport)
     else begin
-      DebugLn('Comm device not set. Use "pmut set comm.device=<device>"');
+      DebugLn('Comm device not set. Use "pmut set comm.device=<device>"', LightRed);
       P2.DebugMode := False;
     end;
   end;
@@ -576,7 +592,7 @@ begin
   Run;
   // Startup debugger
 {$ifndef LINUX}
-  if DebugWatchActive then DebugLn('Warning! "watch" command not implemented for platform.');
+  if DebugWatchActive then DebugLn('"watch" command not implemented for platform.', Yellow);
 {$else}
   if DebugWatchActive then Dependency.Notify := Callbacks.CompileDebug;
 {$endif}

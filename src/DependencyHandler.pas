@@ -8,7 +8,7 @@ uses
 {$ifdef LINUX}
   baseunix, linux,
 {$endif}
-  LazLoggerBase, Classes, SysUtils;
+  Crt, LazLoggerBase, Classes, SysUtils;
 
 type
   TCallbackProc = procedure of object;
@@ -126,7 +126,9 @@ begin
     with inEvent^ do
       if (mask and IN_MODIFY) > 0 then
       begin
-	WriteLn('Source is modified. Rebuilding.');
+        TextColor(Yellow);
+        DebugLn('Source is modified. Rebuilding.');
+        TextColor(LightGray);
         FModified := True;
       end;
     inc(bytesProcessedCount, sizeof(inotify_event)-1 + inEvent^.len);

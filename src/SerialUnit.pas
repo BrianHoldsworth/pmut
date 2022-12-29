@@ -8,7 +8,7 @@ interface
 
 uses
   LazLoggerBase, LCLIntf, LCLType, LMessages, SysUtils, Classes, LazSynaSer,
-  Forms;
+  Crt, Forms;
 
 type
   TSerialThread = class(TThread)
@@ -427,7 +427,9 @@ end;
 procedure CommError(ErrorMsg: string);
 begin
   CloseComm;
+  TextColor(LightRed);
   DebugLn(ErrorMsg+' (%s)', [CommString]);
+  TextColor(LightGray);
   Abort;
 end;
 
