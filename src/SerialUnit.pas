@@ -315,12 +315,20 @@ begin
   CloseComm;
   Serial := TBlockSerial.Create;
   Serial.Connect(CommString);
-  Serial.Config(baud, 8, 'N', 1, False, False);
+  if (Serial.LastError=ErrAlreadyOwned) and Serial.FreeLock then
+  begin
+    TextColor(Yellow);
+    DebugLn('Serial device (%s) lock removed.', [CommString]);
+    TextColor(LightGray);
+    Serial.Connect(CommString);
+  end;
   if Serial.LastError <> 0 then
   begin
     CommError(Serial.LastErrorDesc);
     Exit;
-  end;
+  end
+  else
+    Serial.Config(baud, 8, 'N', 1, False, False);
   SerialThreadStart;
   CommOpen := True;
 end;

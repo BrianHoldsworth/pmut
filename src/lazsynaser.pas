@@ -645,6 +645,7 @@ type
 {$IFDEF UNIX}
     function  cpomComportAccessible: boolean; virtual;{HGJ}
     procedure cpomReleaseComport; virtual; {HGJ}
+    function FreeLock: boolean; virtual;
 {$ENDIF}
     {:True device name of currently used port}
     property Device: string read FDevice;
@@ -2271,6 +2272,11 @@ begin
     CloseFile(f);
   end;
   Result := StrToIntDef(s, -1)
+end;
+
+function TBlockSerial.FreeLock: boolean;
+begin
+  Result := (Readlockfile <> fpGetPid) and DeleteFile(LockFilename);
 end;
 
 function TBlockSerial.cpomComportAccessible: boolean;
