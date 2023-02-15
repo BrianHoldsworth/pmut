@@ -58,6 +58,7 @@ TODO
 ----
 
 - [ ] Linux binary distribution support (rpm, deb, user repositories, maybe flatpak?)
+- [ ] settings for debug output font, size, and color
 - [x] color terminal output, so info, warnings, and errors are easily differentiated
 - [ ] editor integration so compiler errors position the cursor automatically
 - [ ] 64-bit version (requires p2com ported to x64 assembly code)
